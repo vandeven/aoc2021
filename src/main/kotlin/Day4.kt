@@ -32,6 +32,7 @@ class Day4 {
     }
 
     fun getWinningBoardPart1(numbers : List<Int>, boards : List<BingoBoard>) : Pair<BingoBoard?, Int> {
+
         var boards2 = boards
         for(num in numbers){
             boards2 = boards2.map { it.nextBoard(num) }
