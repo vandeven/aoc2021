@@ -14,21 +14,27 @@ class Day6 {
         println(result)
     }
 
-    fun alreadySpawnedFish(counter: Int, map: AtomicLong, maxDays: Int) {
-        map.incrementAndGet()
+    //Handle the already spawned fish
+    fun alreadySpawnedFish(counter: Int, acc: AtomicLong, maxDays: Int) {
+        acc.incrementAndGet()
+
+        //Spawn the fish after that at 7 day intervals
         for (i in ((counter + 1)..maxDays).step(7)) {
-            spawnFish(i, map, maxDays)
+            spawnFish(i, acc, maxDays)
         }
     }
 
-    fun spawnFish(currentDay: Int, map: AtomicLong, maxDays: Int) {
-        map.incrementAndGet()
+    fun spawnFish(currentDay: Int, acc: AtomicLong, maxDays: Int) {
+        acc.incrementAndGet()
+
+        //spawn first fish after 9 days
         val nextSpawn = currentDay + 9
         if (nextSpawn <= maxDays) {
-            spawnFish(nextSpawn, map, maxDays)
+            spawnFish(nextSpawn, acc, maxDays)
         }
+        //Spawn the fish after that at 7 day intervals
         for (i in ((nextSpawn + 7)..maxDays).step(7)) {
-            spawnFish(i, map, maxDays)
+            spawnFish(i, acc, maxDays)
         }
     }
 }
