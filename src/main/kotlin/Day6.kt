@@ -1,4 +1,6 @@
 import java.util.concurrent.atomic.AtomicLong
+import java.util.stream.Collectors
+import kotlin.system.measureTimeMillis
 
 class Day6 {
 
@@ -6,12 +8,22 @@ class Day6 {
         val fileContent = Day1::class.java.getResource("/day6.txt").readText()
         var lines: List<Int> = fileContent.lines().flatMap { it.split(",").map { it.toInt() } }
         val map = lines.groupBy { it }
-        val result = map.mapValues {
-            val acc = AtomicLong(0)
-            alreadySpawnedFish(it.key, acc, 256)
-            acc.get() * it.value.size
-        }.values.sum()
-        println(result)
+        val time = measureTimeMillis {
+            val result2 = map.entries.parallelStream().map {
+                val acc = AtomicLong(0)
+                alreadySpawnedFish(it.key, acc, 256)
+                acc.get() * it.value.size
+            }.collect(Collectors.toList()).sum()
+            println(result2)
+
+//            val result = map.mapValues {
+//                val acc = AtomicLong(0)
+//                alreadySpawnedFish(it.key, acc, 256)
+//                acc.get() * it.value.size
+//            }.values.sum()
+//            println(result)
+        }
+        println("took: ${time}ms")
     }
 
     //Handle the already spawned fish
