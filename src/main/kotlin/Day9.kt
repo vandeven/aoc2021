@@ -26,13 +26,13 @@ class Day9 {
                 }
             }
 
-            var basinNumber = 1
-            var filledMap = fillBasin(cleanMap, basinNumber)
-            while (filledMap.filter { it.value == 0 }.isNotEmpty()) {
-                basinNumber++
-                filledMap = fillBasin(filledMap, basinNumber)
+            val grid: MutableMap<Int, MutableMap<Int, Cell>> = cleanMap.groupBy { it.x }.mapValues { it.value.groupBy { it.y } }.mapValues { it.value.mapValues { it.value.first() } as MutableMap } as MutableMap
+            val maxX = grid.keys.maxOrNull()!!
+            val maxY = grid.flatMap { it.value.keys }.maxOrNull()!!
+            for(basinNumber in 1..(maxX * maxY)){
+                fillBasin(grid, basinNumber)
             }
-            println(filledMap
+            println(grid.values.flatMap { it.values }
                 .filterNot { it.value == 9999 }
                 .groupBy { it.value }
                 .mapValues { it.value.size }
@@ -45,29 +45,57 @@ class Day9 {
         println("took: ${time}ms")
     }
 
-    fun fillBasin(cleanMap : List<Cell>, basinNumber: Int): List<Cell>{
-        val startPoint = cleanMap.first { it.value == 0 }
-        var seededMap = cleanMap.map {
-            if (it.x == startPoint.x && it.y == startPoint.y) {
-                startPoint.copy(value = basinNumber)
-            } else it
-        }
-
-        var neighbours = getNeighbours(seededMap, basinNumber)
-        while (neighbours.isNotEmpty()){
-            seededMap = seededMap.map { if(neighbours.contains(it)) it.copy(value = basinNumber) else it }
-            neighbours = getNeighbours(seededMap, basinNumber)
-        }
-        return seededMap
+    fun print(grid: MutableMap<Int, MutableMap<Int, Cell>>) : String{
+        val maxX = grid.keys.maxOrNull()!!
+        val maxY = grid.flatMap { it.value.keys }.maxOrNull()!!
+        return IntRange(0, maxY).map { y ->
+            IntRange(0, maxX).map { x ->
+                if(grid[x]?.get(y)?.value == 9999){
+                    "***"
+                } else {
+                    "${grid[x]?.get(y)?.value!!}".padEnd(3)
+                }
+            }.joinToString(separator = "")
+        }.joinToString(separator = "\n")
     }
 
-    fun getNeighbours(seededMap : List<Cell>, basinNumber : Int) : List<Cell>{
-        return seededMap.filter { it.value == 0 }.filter {  c->
-            val surroundingLines = seededMap
-                .filter { it.value == basinNumber }
-                .filter { (it.x + 1 == c.x && it.y == c.y) || (it.x - 1 == c.x && it.y == c.y) || (it.y + 1 == c.y && it.x == c.x) || (it.y - 1 == c.y && it.x == c.x) }
-            surroundingLines.isNotEmpty()
+    fun findStartPoint(grid : MutableMap<Int, MutableMap<Int, Cell>>) :Cell? {
+        val maxX = grid.keys.maxOrNull()!!
+        val maxY = grid.flatMap { it.value.keys }.maxOrNull()!!
+
+        for( y in 0..maxY) {
+            for (x in 0..maxX) {
+                if(grid[x]?.get(y)?.value!! == 0){
+                    return grid[x]?.get(y)!!
+                }
+            }
         }
+        return null
+    }
+
+    fun fillBasin(grid : MutableMap<Int, MutableMap<Int, Cell>>, basinNumber: Int){
+        val startPoint = findStartPoint(grid)
+        if(startPoint == null){
+            return
+        }
+        grid[startPoint.x]?.put(startPoint.y,startPoint.copy(value = basinNumber))
+        fill(startPoint.x,startPoint.y,basinNumber,grid)
+    }
+    fun fill(x : Int, y : Int, basinNumber: Int, grid : MutableMap<Int, MutableMap<Int, Cell>>){
+        val neighbours = getNeighbours(x,y,grid)
+        if(neighbours.isEmpty()){
+            return
+        }
+        neighbours.forEach {
+            grid[it.x]?.put(it.y, it.copy(value = basinNumber))
+            fill(it.x, it.y, basinNumber, grid)
+        }
+    }
+
+    fun getNeighbours(x : Int, y : Int, grid : MutableMap<Int, MutableMap<Int, Cell>>) : List<Cell>{
+        return listOf(grid[x - 1]?.get(y), grid[x + 1]?.get(y),grid[x]?.get(y - 1),grid[x]?.get(y + 1))
+            .filterNotNull()
+            .filter { it.value ==0 }
     }
 
     data class Cell(val value: Int, val x: Int, val y: Int)
